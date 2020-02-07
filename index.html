@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Network</title>
+  <script type="text/javascript" src="node_modules/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="node_modules/codemirror/lib/codemirror.js"></script>
+  <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
+  <script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
+  <style type="text/css">
+    html,
+    body {
+      height: 99%;
+    }
+
+    #mynetwork {
+      border: 1px solid red;
+      overflow: scroll;
+    }
+  </style>
+</head>
+
+<body>
+  <script type="text/javascript">
+    function createNetwork(dotString) {
+      let parsedData = vis.parseDOTNetwork(dotString);
+
+      let container = document.getElementById('mynetwork');
+
+      let data = {
+        nodes: parsedData.nodes,
+        edges: parsedData.edges,
+      };
+
+      let options = {
+        nodes: {
+          margin: 10,
+        },
+        layout: {
+          randomSeed: 0,
+        },
+        physics: {
+          stabilization: true,
+          barnesHut: {
+            springLength: 300,
+          }
+        },
+      };
+
+      let network = new vis.Network(container, data, options);
+      network.on("stabilizationIterationsDone", function () {
+        network.setOptions({ physics: false });
+      });
+    }
+  </script>
+
+  <textarea id="mydot">
+# Referensi untuk membentuk Divider dan Subflow
+# divider_1 [label="", shape=dot, size=10]
+# subflow_1 [label="", shape=triangleDown, size=10]
+# subflow_xxx [label="", shape=hexagon]
+  
+digraph customer_order {
+  node [shape=box, fillcolor=white]
+  edge [fontname="monospace"]
+  
+  draft -> submitted [label="action_submit()"]
+  draft -> cancelled [label="action_cancel()"]
+  submitted -> processed [label="action_create_so()"]
+  
+  subflow_1 [label="", shape=triangleDown, size=10]
+  divider_1 [label="", shape=dot, size=10]
+  
+  processed -> subflow_1 [label="signal() = true"]
+  subflow_1 -> divider_1
+  
+  subflow_sales_order [label="sale.sales_order", shape=hexagon]
+  
+  subflow_1 -> subflow_sales_order [label="create_so()"]
+  subflow_sales_order -> subflow_1 [label="so_created()"]
+  
+  draft [fillcolor=lightblue]
+  divider_1 [fillcolor=lightblue]
+}
+  </textarea>
+
+  <div id="mynetwork"></div>
+
+  <script type="text/javascript">
+    let network = document.getElementById('mynetwork');
+
+    let myCodeMirror = CodeMirror.fromTextArea(document.getElementById('mydot'));
+
+    myCodeMirror.setSize(null, 200);
+
+    myCodeMirror.on("change", function () {
+      let value = myCodeMirror.getValue("\n");
+      let bodyHeight = document.body.offsetHeight;
+      let editorHeight = document.getElementsByClassName('CodeMirror')[0].offsetHeight;
+      network.style.height = bodyHeight - editorHeight + "px";
+      createNetwork(value);
+
+      localStorage.setItem("graph_value", value);
+    });
+
+    let value = localStorage.getItem("graph_value");
+    if (value != null) {
+      myCodeMirror.setValue(value);
+    }
+
+    CodeMirror.signal(myCodeMirror, "change");
+  </script>
+</body>
+
+</html>

@@ -9,7 +9,7 @@
   "author": "Erick Pranata",
   "license": "ISC",
   "dependencies": {
-    "codemirror": "^5.51.0",
+    "codemirror": "^5.58.2",
     "vis-network": "^7.3.1"
   }
 }
